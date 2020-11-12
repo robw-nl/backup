@@ -23,8 +23,8 @@ sudo rsync -a -v --progress --backup-dir=$OLDBACKUPS/`date +%Y-%m-%d_%H.%M` --de
 #udo rsync -a -v --progress --backup-dir=/mnt/nvme1n1p1/oldbackups/`date +%Y-%m-%d_%H.%M` --delete -b -s --include-from '/home/rob/Files/Scripts/#ackupinclude.txt' --exclude-from '/home/rob/Files/Scripts/backupexclude.txt' /home/rob /mnt/nvme1n1p1/backup 2>/home/rob/Files/Scripts/backup-#rrors.log
 
 
-# delete backup dirs older then 10 days
-find $OLDBACKUPS/* -mtime +10 -exec sudo rm -rf {} \; 
+# delete backup dirs older then n days (where n = n+1 so 
+find $OLDBACKUPS/* -mtime +5 -maxdepth 1 -exec sudo rm -rf {} \; 
 
 
 # open log in case of errors
