@@ -21,7 +21,7 @@ sudo rsync -a -v --progress --backup-dir=$OLDBACKUPS/`date +%Y-%m-%d_%H.%M` --de
 
 
 # delete backup dirs older then n days (where n = n+1 so 5 = 6 days counting from 0)
-find $OLDBACKUPS/* -mtime +5 -maxdepth 1 -exec sudo rm -rf {} \; 
+find $OLDBACKUPS/* -maxdepth 1 -mtime +5 -type d -exec sudo rm -rf {} \; 
 
 
 # open log in case of errors
