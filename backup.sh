@@ -26,7 +26,10 @@ then
     kate $SCRIPTS/backup-errors.log
 else
     # delete backup dirs older then n days (where n = n+1 so 5 = 6 days counting from 0)
-    find $OLDBACKUPS/* -maxdepth 1 -mtime +5 -type d -exec sudo rm -rf {} \; 
-
+    find $OLDBACKUPS/* -maxdepth 0 -mtime +5 -type d -exec sudo rm -rf {} \;2>$SCRIPTS/rm-errors.log
+    if [ -s $SCRIPTS/rm-errors.log ]
+    then
+        kate $SCRIPTS/rm-errors.log
+    fi
     notify-send "Backup finished"
 fi
