@@ -20,14 +20,13 @@ SCRIPTS="/home/rob/Files/Scripts"
 sudo rsync -a -v --progress --backup-dir=$OLDBACKUPS/`date +%Y-%m-%d_%H.%M` --delete -b -s --include-from $SCRIPTS/backupinclude.txt --exclude-from $SCRIPTS/backupexclude.txt /home/rob $BACKUPS 2>$SCRIPTS/backup-errors.log
 
 
-# delete backup dirs older then n days (where n = n+1 so 5 = 6 days counting from 0)
-find $OLDBACKUPS/* -maxdepth 1 -mtime +5 -type d -exec sudo rm -rf {} \; 
-
-
 # open log in case of errors
 if [ -s $SCRIPTS/backup-errors.log ]
 then
     kate $SCRIPTS/backup-errors.log
 else
+    # delete backup dirs older then n days (where n = n+1 so 5 = 6 days counting from 0)
+    find $OLDBACKUPS/* -maxdepth 1 -mtime +5 -type d -exec sudo rm -rf {} \; 
+
     notify-send "Backup finished"
 fi
