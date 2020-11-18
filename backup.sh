@@ -26,7 +26,7 @@ then
     kate $SCRIPTS/backup-errors.log
 else
     # delete backup dirs older then n days (where n = n+1 so 5 = 6 days counting from 0)
-    find $OLDBACKUPS/* -maxdepth 0 -type d -mtime +5 | xargs rm -rf;2>$SCRIPTS/rm-errors.log
+    find $OLDBACKUPS/* -maxdepth 0 -type d -mtime +5 | xargs sudo rm -rf;2>$SCRIPTS/rm-errors.log
     if [ -s $SCRIPTS/rm-errors.log ]
     then
         kate $SCRIPTS/rm-errors.log
