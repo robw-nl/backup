@@ -1,6 +1,5 @@
 #
 # folders and files to exclude from rsync
-# anaconda3 is skipped as it better gets reinstalled
 #
 # v 1.0 created by rob wijhenke november 2020
 # v1.3 march 2023
