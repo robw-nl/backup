@@ -10,7 +10,7 @@
 # created by rob wijhenke november 2020
 # v1.1 rev-a march 9 2023
 # v1.1 rev-b march 19 2023
-# v1.2  December 21 2023
+# v1.2  December 21 2023 rewrite to introduce several functions
 #
 
 # Set some variables
