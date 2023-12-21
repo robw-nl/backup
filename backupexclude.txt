@@ -1,0 +1,31 @@
+#
+# folders and files to exclude from rsync
+# anaconda3 is skipped as it better gets reinstalled
+#
+# v 1.0 created by rob wijhenke november 2020
+# v1.3 march 2023
+#
+
+/.config
+/bin
+/boot
+/dev
+/etc/*
+/home/root
+/home/rob/*
+/lib
+/lib64
+/lost+found
+/mnt
+/opt
+/proc
+/root
+/run
+/sbin
+/srv
+/sys
+/tmp
+/usr
+/var
+/.manjaro-tools
+/file
