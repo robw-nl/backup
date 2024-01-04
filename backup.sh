@@ -9,8 +9,8 @@
 #
 # created by rob wijhenke november 2020
 # v1.0   March 6 2020            initial realease
-# v1.1   rev-a March 9 2020      fixed bug
-# v1.1   rev-b March 19 2020     cleaned up code
+# v1.1   rev-a March 9 2023      fixed bug
+# v1.1   rev-b March 19 2023     cleaned up code
 # v1.2   December 21 2023        rewrite to introduce several functions
 # v1.2   rev-a December 24 2023  added error handling
 # v1.2   rev-b January 4 2024    added delete empty logs function
