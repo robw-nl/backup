@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# rsync command to backup home drive recursively to /mnt/nvme1n1p1
+# rsync command to backup home drive (1 TB SSD '1') recursively to /mnt/nvme1n1p1 (1 TB SSD '2') 
 # while copying deleted files to /mnt/nvme1n1p1/oldbackups
 # each oldbackups entry is in a timestamped directory
 #
-# For daily execution create a symlink to the script in cron.daily:
+# for daily execution create a symlink to the script in cron.daily:
 # sudo ln -s /home/rob/Files/Scripts/backup.sh backup
 #
 # created by rob wijhenke november 2020
@@ -17,14 +17,6 @@
 # v1.2   rev-b January 4 2024    improved notification handling
 # 
 
-NOTIFICATION_DURATION=4000
-
-# Notify that backup is starting
-notify-send -t $NOTIFICATION_DURATION "Backup is starting..."
-
-# tell bash to exit on error
-set -e
-
 # Set some variables
 OLDBACKUPS="/mnt/nvme1n1p1/oldbackups/"
 SOURCE="/"
@@ -33,6 +25,13 @@ SCRIPTS="/home/rob/Files/Scripts"
 RETENTION_CYCLE=14
 DATE=$(date +%Y-%m-%d_%H.%M)
 BACKUP_LOG="$SCRIPTS/backup-errors-$DATE.log"
+NOTIFICATION_DURATION=4000
+
+# Notify that backup is starting
+notify-send -t $NOTIFICATION_DURATION "Backup is starting..."
+
+# tell bash to exit on error
+set -e
 
 # Sync files
 sync_files() {
