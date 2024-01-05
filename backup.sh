@@ -9,83 +9,98 @@
 # v1.0   March 6 2020            initial realease
 # v1.1   rev-a March 9 2023      fixed bug
 # v1.1   rev-b March 19 2023     cleaned up code
-# v1.2   December 21 2023        rewrite to introduce several functions
+# v1.2   December 21 2023        refactored introducing functions
 # v1.2   rev-a December 24 2023  added error handling
-# v1.2   rev-b January 4 2024    added delete empty logs function
-# v1.2   rev-b January 4 2024    further improved error & notification handling
-# 
+# v1.2   rev-b January 3 2024    added delete empty logs function
+# v1.2   rev-b January 3 2024    improved error & notification handling
+# v1.3         January 5 2024    full refactoring as the code became too
+#                                complex. added configuration file and
+#                                re-wrote error handling en program flow
+#
 
-# Set some variables
-EDITOR_CMD="kate"
-RETENTION_CYCLE=10
-NOTIFICATION_DURATION=4000
-DATE=$(date +%Y-%m-%d_%H.%M)
-SOURCE="/"
-BACKUP="/mnt/nvme1n1p1/backup/"
-OLDBACKUPS="/mnt/nvme1n1p1/oldbackups/"
-SCRIPTS="/home/rob/Files/Scripts"
-BACKUP_LOG="$SCRIPTS/backup-errors-$DATE.log"
-
-# tell bash to exit on error
 set -e
+set -u
 
-# Check if required commands are available
-for cmd in rsync find notify-send $EDITOR_CMD; do
-  if ! command -v $cmd &> /dev/null; then
-    ERROR_MSG="Error: $cmd is not installed."
-    echo "$ERROR_MSG" >> "$BACKUP_LOG"
-    notify-send -t $NOTIFICATION_DURATION "$ERROR_MSG"
-    exit 1
+# Configuration - change location appropriately
+CONFIG_FILE="/home/rob/Files/Scripts/backup.conf"
+
+# Log errors log file and on screen; progress only on screen
+log_and_notify() {
+  local message="$1"
+  local isError="$2"
+  notify-send -t $NOTIFICATION_DURATION "$message"
+  if [ "$isError" = true ]; then
+    printf "%s\n" "$message" >> "$BACKUP_LOG"
   fi
-done
-
-# Check if directories exist
-for dir in $SOURCE $BACKUP $OLDBACKUPS; do
-  if [ ! -d "$dir" ]; then
-    ERROR_MSG="Error: Directory $dir does not exist."
-    echo "$ERROR_MSG" >> "$BACKUP_LOG"
-    notify-send -t $NOTIFICATION_DURATION "$ERROR_MSG"
-    exit 1
-  fi
-done
-
-# Notify that backup is starting
-notify-send -t $NOTIFICATION_DURATION "Backup is starting..." || exit 1
-
-# Sync source to backup
-sync_source_to_backup() {
-    # rsync command to backup home drive (1 TB SSD '1') recursively to /mnt/nvme1n1p1 (1 TB SSD '2') 
-    # while copying deleted files to /mnt/nvme1n1p1/oldbackups
-    # each oldbackups entry is in a timestamped directory
-    ERROR_OUTPUT=$(sudo rsync -a -v --progress --backup-dir="$OLDBACKUPS/$DATE" --delete -b -s --include-from "$SCRIPTS/backupinclude.txt" --exclude-from "$SCRIPTS/backupexclude.txt" $SOURCE "$BACKUP" 2>&1) || {
-        ERROR_MSG="rsync failed with exit code $?. Check the log file for details."
-        echo "$ERROR_OUTPUT" >> "$BACKUP_LOG"
-        notify-send -t $NOTIFICATION_DURATION "$ERROR_MSG"
-        exit 1
-    }
 }
 
-# Handle backup logs
+# Check if required commands are installed
+check_commands() {
+    for cmd in rsync find notify-send $EDITOR_CMD; do
+        if ! command -v $cmd &> /dev/null; then
+            log_and_notify "Error: $cmd is not installed." true "$cmd" || exit 1
+        fi
+    done
+}
+
+# Check if directories exist
+check_directories() {
+    local source_dir="$1"
+    local backup_dir="$2"
+    local old_backups_dir="$3"
+    for dir in $source_dir $backup_dir $old_backups_dir; do
+        if [ ! -d "$dir" ]; then
+            log_and_notify "Error: Directory $dir does not exist." true
+            return 1
+        fi
+    done
+    return 0
+}
+
+# Execute the backup
+execute_backup() {
+    local source_dir="$1"
+    local backup_dir="$2"
+    local old_backups_dir="$3"
+    local date="$4"
+    local scripts_dir="$5"
+    local backup_log="$6"
+    sudo rsync -a --progress --backup-dir="$old_backups_dir/$date" --delete -b -s --include-from "$scripts_dir/backupinclude.txt" --exclude-from "$scripts_dir/backupexclude.txt" $source_dir "$backup_dir" 2>> "$backup_log" || {
+        local exit_status=$?
+        log_and_notify "rsync failed with exit code $exit_status. Check the log file for details." true "rsync"
+        return 1
+    }
+    return 0
+}
+
+# Deal with errors and notifications; keep only log files with errors
 handle_backup_logs() {
     if [ -s $BACKUP_LOG ]; then
         $EDITOR_CMD $BACKUP_LOG
+        log_and_notify "Errors occurred during backup. Check the log file." true
+    else
+        if [ -f $BACKUP_LOG ]; then
+            notify-send -t $NOTIFICATION_DURATION "No errors occurred during backup"
+            rm $BACKUP_LOG
+        fi
+        log_and_notify "Backup finished" false
     fi
-    if [ -f $BACKUP_LOG ]; then
-        notify-send -t $NOTIFICATION_DURATION "No errors occurred during backup. Deleting log file."
-        rm $BACKUP_LOG
-    fi
-    notify-send -t $NOTIFICATION_DURATION "Backup finished"
 }
 
-# Delete old backup directories
-delete_old_backup_directories() {
-    find $OLDBACKUPS/* -type d -ctime +$RETENTION_CYCLE -exec sudo rm -rf {} \; || {
-        notify-send -t $NOTIFICATION_DURATION "Failed to delete old backups with exit code $?" || echo "Failed to delete old backups with exit code $?" >> "$BACKUP_LOG"
-        exit 1
-    }
-}
+# Main
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else
+    printf "Configuration file not found at %s\n" "$CONFIG_FILE"
+    exit 1
+fi
 
-# Execute the functions
-sync_source_to_backup
+check_commands
+if ! check_directories $SOURCE $BACKUP $OLDBACKUPS; then
+    exit 1
+fi
+log_and_notify "Backup is starting..." false
+if ! execute_backup $SOURCE $BACKUP $OLDBACKUPS $DATE $SCRIPTS $BACKUP_LOG; then
+    exit 1
+fi
 handle_backup_logs
-delete_old_backup_directories
