@@ -16,7 +16,7 @@
 # v1.3         January 6 2024    full refactoring as the code became too
 #                                complex. added configuration file and
 #                                re-wrote error handling en program flow
-#
+# v1.3   rev-c January 11 2024   fixed bug in error handling
 
 set -e
 set -u
@@ -94,7 +94,9 @@ check_commands
 if ! check_directories; then
     exit 1
 fi
-log_and_notify "Backup is starting..." false
+# delay notification to allow for cron to start
+sleep 1
+log_and_notify "Backup is starting" false
 if ! execute_backup; then
     exit 1
 fi
