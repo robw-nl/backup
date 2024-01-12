@@ -13,10 +13,12 @@
 # v1.2   rev-a December 24 2023  added error handling
 # v1.2   rev-b January 3 2024    added delete empty logs function
 # v1.2   rev-b January 3 2024    improved error & notification handling
-# v1.3         January 6 2024    full refactoring as the code became too complex.
-#              added configuration file and re-wrote error handling en program flow
+# v1.3         January 6 2024    full refactoring, the code became too complex.
+#                                added configuration file and re-wrote error 
+#                                handling en program flow
 # v1.3   rev-c January 11 2024   fixed bug in error handling
-# v1.3   rev-d January 12 2024   re-added old backup deletion following retension cycle
+# v1.3   rev-d January 12 2024   re-added old backup deletion following retension
+#                                cycle, added a user manual
 #
 
 set -e
