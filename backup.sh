@@ -13,10 +13,11 @@
 # v1.2   rev-a December 24 2023  added error handling
 # v1.2   rev-b January 3 2024    added delete empty logs function
 # v1.2   rev-b January 3 2024    improved error & notification handling
-# v1.3         January 6 2024    full refactoring as the code became too
-#                                complex. added configuration file and
-#                                re-wrote error handling en program flow
+# v1.3         January 6 2024    full refactoring as the code became too complex.
+#              added configuration file and re-wrote error handling en program flow
 # v1.3   rev-c January 11 2024   fixed bug in error handling
+# v1.3   rev-d January 12 2024   re-added old backup deletion following retension cycle
+#
 
 set -e
 set -u
@@ -66,6 +67,17 @@ execute_backup() {
     return 0
 }
 
+# Delete old backup directories
+delete_old_backups() {
+    log_and_notify "Removing old backups" false
+    find $OLD_BACKUP_DIR/* -type d -ctime +$RETENTION_CYCLE -exec sudo rm -rf {} \;
+    if [[ $? -eq 0 ]]; then
+        log_and_notify "Old backups removed" false
+    else
+        log_and_notify "Failed to remove old backups" true
+    fi
+}
+
 # Deal with errors and notifications; keep only log files with errors
 handle_backup_logs() {
     if [[ -s "${BACKUP_LOG}" ]]; then
@@ -90,14 +102,18 @@ else
     exit 1
 fi
 
-check_commands
+# check_commands
 if ! check_directories; then
     exit 1
 fi
+
 # delay notification to allow for cron to start
-sleep 1
+sleep 2
+
+# execute backup
 log_and_notify "Backup is starting" false
 if ! execute_backup; then
     exit 1
 fi
 handle_backup_logs
+delete_old_backups
