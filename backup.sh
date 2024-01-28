@@ -19,7 +19,8 @@
 # v1.3   rev-c January 11 2024   fixed bug in error handling
 # v1.3   rev-d January 12 2024   re-added old backup deletion following retension
 #                                cycle, added a user manual
-#
+#        rev-e January 25 2024   improved error handling
+#        rev-f January 28 2024   improved error handling
 
 set -e
 set -u
@@ -29,14 +30,22 @@ CONFIG_FILE="/home/rob/Files/Scripts/backup.conf"
 
 # Log errors log file and on screen; progress only on screen
 log_and_notify() {
-  local message="$1"
-  local isError="$2"
-  if ! notify-send -t "${NOTIFICATION_DURATION}" "${message}"; then
-    printf "Failed to send desktop notification: %s\n" "${message}" >> "${BACKUP_LOG}"
-  fi
-  if [[ "${isError}" = true ]]; then
-    printf "%s\n" "${message}" >> "${BACKUP_LOG}"
-  fi
+    local message="$1"
+    local isError="${2:-false}"
+    local logFile="${3:-${BACKUP_LOG}}"
+
+    # Send a desktop notification
+    notify-send -t "${NOTIFICATION_DURATION}" "${message}"
+
+    # If it's an error message and not empty, log it
+    if [[ "${isError}" = true ]] && [[ -n "${message}" ]]; then
+        # Ensure the log file exists
+        if [[ ! -f "${logFile}" ]]; then
+            touch "${logFile}"
+        fi
+        # Append the message to the log file
+        printf "%s\n" "${message}" >> "${logFile}"
+    fi
 }
 
 # Check if required commands are installed
@@ -56,17 +65,15 @@ check_directories() {
             return 1
         fi
     done
-    return 0
 }
 
 # Execute the backup
 execute_backup() {
-    sudo rsync -a --progress --backup-dir="${OLD_BACKUP_DIR}/${DATE}" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}" || {
-        local exit_status=$?
-        log_and_notify "rsync failed with exit code ${exit_status}. Check the log file for details." true
+    sudo rsync -a --progress --backup-dir="${OLD_BACKUP_DIR}/${DATE}" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}"
+    if [[ $? -ne 0 ]]; then
+        log_and_notify "rsync failed with exit code $?. Check the log file for details." true
         return 1
-    }
-    return 0
+    fi
 }
 
 # Delete old backup directories
@@ -85,15 +92,11 @@ handle_backup_logs() {
     if [[ -s "${BACKUP_LOG}" ]]; then
         "${EDITOR_CMD}" "${BACKUP_LOG}"
         log_and_notify "Errors occurred during backup. Check the log file." true
-    else
-        if [[ -f "${BACKUP_LOG}" ]]; then
-            log_and_notify "No errors occurred during backup" false
-            if [[ $? -eq 0 && -f "${BACKUP_LOG}" ]]; then
-                rm "${BACKUP_LOG}"
-            fi
-        fi
-        log_and_notify "Backup finished" false
+    elif [[ -f "${BACKUP_LOG}" ]]; then
+        rm "${BACKUP_LOG}"
+        log_and_notify "No errors occurred during backup" false
     fi
+    log_and_notify "Backup finished" false
 }
 
 # Main
@@ -105,17 +108,13 @@ else
 fi
 
 # check_commands
-if ! check_directories; then
-    exit 1
-fi
+check_directories || exit 1
 
 # delay notification to allow for cron to start
-sleep 2
+sleep 10
 
 # execute backup
 log_and_notify "Backup is starting" false
-if ! execute_backup; then
-    exit 1
-fi
+execute_backup || exit 1
 handle_backup_logs
 delete_old_backups
