@@ -7,7 +7,8 @@ It uses a retention cycle parameter effectively deleting all backups that
 fall outside the parameters value. So RETENTION_CYCLE=14 means it will
 delete all folders/files older than 14 days. All activites are logged.
 
-I think this is all quite self-explanatory, reach out if you have questions.
+There's a lot of documentation in the script already so I think this is all
+quite self-explanatory but reach out if you have questions.
 
 In 2023 I started re-writing the script resulting is improved error-handling,
 error logging, user notifications. It now also justifies it's own user manual,
