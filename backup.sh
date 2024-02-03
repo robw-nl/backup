@@ -36,7 +36,7 @@ check_run_file() {
     touch "${RUN_FILE}"
 }
 
-backup_version="rev-f January 28 2024"
+backup_version="rev-g February 3 2024"
 
 set -e
 set -u

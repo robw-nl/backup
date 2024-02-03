@@ -2,12 +2,12 @@ Backup.sh User Manual
 
 Overview
 backup.sh is a bash script designed to backup files from a source directory to a backup directory.
-It uses rsync for the backup process, find for removing old backups, and notify-send for desktop notifications.
-The script also logs errors and progress.
+It uses rsync for the backup process, find for removing old backups, and notify-send for desktop 
+notifications. The script also logs errors and progress.
 
 Configuration
 Before running the script, you need to configure it by editing the backup.conf file located at 
-/home/USERDIR/Files/Scripts/backup.conf. This file should contain the following variables:
+/home/rob/Files/Scripts/backup.conf. This file should contain the following variables:
 
 SOURCE: The directory you want to backup.
 BACKUP: The directory where the backup will be stored.
@@ -17,38 +17,38 @@ SCRIPTS: The directory where the backupinclude.txt and backupexclude.txt files a
 BACKUP_LOG: The file where the backup logs will be stored.
 EDITOR_CMD: The command to open the log file in a text editor.
 RETENTION_CYCLE: The number of days to keep old backups.
-In addition to the backup.conf file, you also need to create backupinclude.txt and backupexclude.txt files in the 
-SCRIPTS directory. The backupinclude.txt file should list the files or directories to include in the backup, and the 
-backupexclude.txt file should list the files or directories to exclude from the backup. Each file or directory should 
-be on a new line in these files.
+RUN_FILE: The file used to prevent multiple instances of the script from running at the same time.
+
+In addition to the backup.conf file, you also need to create backupinclude.txt and backupexclude.txt 
+files in the SCRIPTS directory. The backupinclude.txt file should list the files or directories to 
+include in the backup, and the backupexclude.txt file should list the files or directories to exclude 
+from the backup. Each file or directory should be on a new line in these files.
 
 Running the Script
-To run the script, open a terminal and navigate to the directory containing backup.sh using the cd command. 
-For example:
+To run the script, open a terminal and navigate to the directory containing backup.sh using the cd 
+command. Then, run the following command:
 
-Then, run the following command:
+```shellscript
+./backup.sh
 
 If you get a permission denied error, you may need to make the script executable with the following command:
+chmod +x backup.sh
 
-Notifications
-The script uses notify-send to send desktop notifications about the progress of the backup. If notify-send fails, the 
-script will log the failure.
+Notifications The script uses notify-send to send desktop notifications about the progress of the backup. 
+If notify-send fails, the script will log the failure.
 
-Error Handling
-If an error occurs during the backup, the script will log the error and open the log file in a text editor specified 
-by EDITOR_CMD.
+Error Handling If an error occurs during the backup, the script will log the error and open the log file 
+in a text editor specified by EDITOR_CMD.
 
-Old Backups
-The script will automatically delete backups that are older than the number of days specified by RETENTION_CYCLE.
+Old Backups The script will automatically delete backups that are older than the number of days specified 
+by RETENTION_CYCLE.
 
-Logs
-The script logs all errors to a file specified by BACKUP_LOG. If no errors occur during the backup, the log file will 
-be deleted.
+Logs The script logs all errors to a file specified by BACKUP_LOG. If no errors occur during the backup, 
+the log file will be deleted.
 
-Requirements
-The script requires the following commands to be installed: rsync, find, notify-send, and the command specified by 
-EDITOR_CMD. If any of these commands are not installed, the script will log an error and exit. You can install these 
-commands using your distribution's package manager.
+Requirements The script requires the following commands to be installed: rsync, find, notify-send, and 
+the command specified by EDITOR_CMD. If any of these commands are not installed, the script will log an 
+error and exit. You can install these commands using your distribution's package manager.
 
 For example, on Ubuntu or other Debian-based distributions, you can use the apt command:
 sudo apt install rsync findutils libnotify-bin
@@ -59,6 +59,6 @@ sudo dnf install rsync findutils libnotify
 On Arch Linux or Manjaro, you can use the pacman command:
 sudo pacman -S rsync findutils libnotify
 
-Replace EDITOR_CMD with the command to open your preferred text editor. For example, if you use nano, 
-set EDITOR_CMD=nano. If you use gedit, set EDITOR_CMD=gedit. In the back.sh script we use kate, which 
-is the default Manjaro text editor.
+Replace EDITOR_CMD with the command to open your preferred text editor. I use notify-send but if you want
+to use nano, set EDITOR_CMD=nano. If you use gedit, set EDITOR_CMD=gedit. In the back.sh script you can 
+also use kate which is the default Manjaro text editor instead of notify-send.
