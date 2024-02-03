@@ -21,6 +21,22 @@
 #                                cycle, added a user manual
 #        rev-e January 25 2024   improved error handling
 #        rev-f January 28 2024   improved error handling
+#        rev-g February 3 2024   added daily run file check to be cron independent
+
+
+# Check if the run file exists and was last modified today
+check_run_file() {
+    # Check if the run file exists and was last modified today
+    if [[ -f "${RUN_FILE}" ]] && [[ "$(date -r "${RUN_FILE}" +%Y%m%d)" == "$(date +%Y%m%d)" ]]; then
+        # The run file exists and was last modified today, so exit the script
+        exit 0
+    fi
+
+    # The run file doesn't exist or wasn't last modified today, so touch the run file and continue with the script
+    touch "${RUN_FILE}"
+}
+
+backup_version="rev-f January 28 2024"
 
 set -e
 set -u
@@ -35,7 +51,11 @@ log_and_notify() {
     local logFile="${3:-${BACKUP_LOG}}"
 
     # Send a desktop notification
-    notify-send -t "${NOTIFICATION_DURATION}" "${message}"
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "${message}"
+    else
+        echo "${message}"
+    fi
 
     # If it's an error message and not empty, log it
     if [[ "${isError}" = true ]] && [[ -n "${message}" ]]; then
@@ -110,11 +130,12 @@ fi
 # check_commands
 check_directories || exit 1
 
-# delay notification to allow for cron to start
+# Wait for 10 seconds for the desktop to load as this script runs on first startup
 sleep 10
 
 # execute backup
-log_and_notify "Backup is starting" false
+log_and_notify "Backup is starting. Version is ${backup_version}" false
+check_run_file
 execute_backup || exit 1
 handle_backup_logs
 delete_old_backups
