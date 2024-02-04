@@ -31,6 +31,8 @@ command. Then, run the following command:
 ```shellscript
 ./backup.sh
 
+The script runs at once by default. Add an integer to delay start. E.g. ./backup.sh 10 will delay 10 seconds
+
 If you get a permission denied error, you may need to make the script executable with the following command:
 chmod +x backup.sh
 
