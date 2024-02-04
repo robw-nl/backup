@@ -22,13 +22,20 @@
 #        rev-e January 25 2024   improved error handling
 #        rev-f January 28 2024   improved error handling
 #        rev-g February 3 2024   added daily run file check to be cron independent
+#                                and fixed some minor issues
 
+set -e
+set -u
+
+backup_version="rev-g February 3 2024"
 
 # Check if the run file exists and was last modified today
 check_run_file() {
     # Check if the run file exists and was last modified today
     if [[ -f "${RUN_FILE}" ]] && [[ "$(date -r "${RUN_FILE}" +%Y%m%d)" == "$(date +%Y%m%d)" ]]; then
         # The run file exists and was last modified today, so exit the script
+        echo "Backup  already run today"
+        log_and_notify "Backup  already run today"
         exit 0
     fi
 
@@ -36,10 +43,24 @@ check_run_file() {
     touch "${RUN_FILE}"
 }
 
-backup_version="rev-g February 3 2024"
+# Check if directories exist
+check_directories() {
+    for dir in "${SOURCE}" "${BACKUP}" "${OLD_BACKUP_DIR}"; do
+        if [[ ! -d "${dir}" ]]; then
+            log_and_notify "Error: Directory ${dir} does not exist." true
+            return 1
+        fi
+    done
+}
 
-set -e
-set -u
+# Check if required commands are installed
+check_commands() {
+    for cmd in rsync find notify-send "${EDITOR_CMD}"; do
+        if ! command -v "${cmd}" > /dev/null 2>&1; then
+            log_and_notify "Error: ${cmd} is not installed." true || exit 1
+        fi
+    done
+}
 
 # Configuration - change location appropriately
 CONFIG_FILE="/home/rob/Files/Scripts/backup.conf"
@@ -57,7 +78,7 @@ log_and_notify() {
         echo "${message}"
     fi
 
-    # If it's an error message and not empty, log it
+    # If it's an error message AND not an empty message, log it
     if [[ "${isError}" = true ]] && [[ -n "${message}" ]]; then
         # Ensure the log file exists
         if [[ ! -f "${logFile}" ]]; then
@@ -66,25 +87,6 @@ log_and_notify() {
         # Append the message to the log file
         printf "%s\n" "${message}" >> "${logFile}"
     fi
-}
-
-# Check if required commands are installed
-check_commands() {
-    for cmd in rsync find notify-send "${EDITOR_CMD}"; do
-        if ! command -v "${cmd}" > /dev/null 2>&1; then
-            log_and_notify "Error: ${cmd} is not installed." true || exit 1
-        fi
-    done
-}
-
-# Check if directories exist
-check_directories() {
-    for dir in "${SOURCE}" "${BACKUP}" "${OLD_BACKUP_DIR}"; do
-        if [[ ! -d "${dir}" ]]; then
-            log_and_notify "Error: Directory ${dir} does not exist." true
-            return 1
-        fi
-    done
 }
 
 # Execute the backup
@@ -127,6 +129,9 @@ else
     exit 1
 fi
 
+# Check if backup already run today. if so, exit
+check_run_file
+
 # check_commands
 check_directories || exit 1
 
@@ -135,7 +140,6 @@ sleep 10
 
 # execute backup
 log_and_notify "Backup is starting. Version is ${backup_version}" false
-check_run_file
 execute_backup || exit 1
 handle_backup_logs
 delete_old_backups
