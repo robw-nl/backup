@@ -1,9 +1,8 @@
 #!/bin/bash
 #
-# this script will run om manjaro and arch. for other distros,
-# change rsync and other commands to accomodate your distro
-# for daily execution create a symlink to the script in cron.daily:
-# sudo ln -s /home/rob/Files/Scripts/backup.sh backup
+# this script is developed for manjaro and arch. For other distros change rsync and
+# other commands to accomodate your distro. For daily execution make an autostart
+# entry. The script checks if it already ran that day. Alternatively use cron.
 #
 # created by rob wijhenke november 2020
 # v1.0   March 6 2020            initial realease
@@ -22,7 +21,8 @@
 #        rev-e January 25 2024   improved error handling
 #        rev-f January 28 2024   improved error handling
 #        rev-g February 3 2024   added daily run file check to be cron independent
-#                                and fixed some minor issues
+#                                and fixed some minor issues. Added a delay parameter
+#                                to delay execution with n secondse.g. ../backup.sh 10
 
 set -e
 set -u
@@ -136,6 +136,7 @@ check_run_file
 check_directories || exit 1
 
 # Wait for 10 seconds for the desktop to load as this script runs on first startup
+# or at once if not adding a parameter
 sleep 10
 
 # execute backup
