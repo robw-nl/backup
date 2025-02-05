@@ -95,11 +95,12 @@ log_and_notify() {
     fi
 }
 
-# Execute the backup
 execute_backup() {
+    local rsync_result  # Declare the variable as local to the function
     sudo rsync -a --progress --backup-dir="${OLD_BACKUP_DIR}/${DATE}" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}"
-    if [[ $? -ne 0 ]]; then
-        log_and_notify "rsync failed with exit code $?. Check the log file for details." true
+    rsync_result=$?        # Assign the exit code
+    if ! [[ $rsync_result -eq 0 ]]; then # Use numeric comparison for exit codes
+        log_and_notify "rsync failed with exit code ${rsync_result}. Check the log file for details." true
         return 1
     fi
 }
@@ -109,12 +110,13 @@ delete_old_backups() {
     log_and_notify "Removing old backups" false
 
     # Use -mindepth 1 to avoid issues with the base directory
-    find "$OLD_BACKUP_DIR" -mindepth 1 -type d -ctime +"$RETENTION_CYCLE" -exec sudo rm -rf {} \;
+    find "$OLD_BACKUP_DIR" -mindepth 1 -type d -ctime +"$RETENTION_CYCLE" -exec sh -c 'sudo rm -rf "$1"; test $? -eq 0' sh {} \;
+    find_result=$?
 
-    if [[ $? -eq 0 ]]; then
+    if [[ $find_result -eq 0 ]]; then
         log_and_notify "Old backups removed" false
     else
-        log_and_notify "Failed to remove old backups" true
+        log_and_notify "Failed to remove old backups (or some files could not be removed)" true  # More specific message
     fi
 }
 
@@ -133,17 +135,21 @@ handle_backup_logs() {
 }
 
 # --- Main Script ---
+config_load() {
+    local config_file="/home/rob/Files/Scripts/backup.conf"  # Local variable
+    if [[ -f "$config_file" && -r "$config_file" ]]; then
+        source "/home/rob/Files/Scripts/backup.conf"
+    else
+        printf "Configuration file not found or not readable at %s\n" "$config_file" >&2
+        return 1
+    fi
+    return 0
+}
 
-# Configuration - change location appropriately
-CONFIG_FILE="/home/rob/Files/Scripts/backup.conf"
-
-# Load configuration
-if [[ -f "${CONFIG_FILE}" && -r "${CONFIG_FILE}" ]]; then
-    source "${CONFIG_FILE}"
-else
-    printf "Configuration file not found or not readable at %s\n" "${CONFIG_FILE}"
+if ! config_load; then
     exit 1
 fi
+
 
 # Check if backup already run today. if so, exit
 check_run_file
