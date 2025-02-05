@@ -136,11 +136,17 @@ handle_backup_logs() {
 
 # --- Main Script ---
 config_load() {
-    local config_file="/home/rob/Files/Scripts/backup.conf"  # Local variable
+    local config_file="/home/rob/Files/Scripts/backup.conf"
     if [[ -f "$config_file" && -r "$config_file" ]]; then
-        source "/home/rob/Files/Scripts/backup.conf"
+        source "$config_file"
+        if [[ $? -ne 0 ]]; then # check if source was successful
+            printf "Error sourcing configuration file %s\n" "$config_file" >&2
+            log_and_notify "Error sourcing configuration file. Check the log for details." true
+            return 1
+        fi
     else
         printf "Configuration file not found or not readable at %s\n" "$config_file" >&2
+        log_and_notify "Configuration file not found or not readable." true
         return 1
     fi
     return 0
