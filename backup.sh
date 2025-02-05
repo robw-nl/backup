@@ -138,8 +138,9 @@ handle_backup_logs() {
 config_load() {
     local config_file="/home/rob/Files/Scripts/backup.conf"
     if [[ -f "$config_file" && -r "$config_file" ]]; then
-        source "$config_file"
-        if [[ $? -ne 0 ]]; then # check if source was successful
+        source "/home/rob/Files/Scripts/backup.conf" # use full path to avoid shellcheck warning
+        source_result=$?
+        if [[ $source_result -ne 0 ]]; then
             printf "Error sourcing configuration file %s\n" "$config_file" >&2
             log_and_notify "Error sourcing configuration file. Check the log for details." true
             return 1
@@ -155,7 +156,6 @@ config_load() {
 if ! config_load; then
     exit 1
 fi
-
 
 # Check if backup already run today. if so, exit
 check_run_file
