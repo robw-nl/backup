@@ -10,11 +10,11 @@
 # sudo ln -s /home/rob/Files/Scripts/backup.sh /etc/cron.daily/backup
 #
 # Author: Rob Wijhenke
-# Initial Release: November 2020
-# Current Version: rev-h May 7 2024
+# Initial Release: March 6 2020
+# Current Version: v2.0 rev-a February 12 2025
 #
 # Version History:
-# v1.0   March 6 2020              Initial release
+# v1.0   March 6 2020              Initial build
 # v1.1   March 19 2023             Fixed bug, cleaned up code
 # v1.2   December 21 2023          Refactored, introduced functions
 # v1.2   rev-a December 24 2023    Added error handling
@@ -25,10 +25,9 @@
 # v1.3   rev-d January 12 2024     Improved RETENTION_CYCLE, added user manual
 #        rev-e+f January 25 2024   Improved error handling
 #        rev-g February 3 2024     Added daily run file check to be cron independent
-#        rev-h May 7 2024          Moved a parameter to config file
-#
-# v1.4   February 5 2025           Partial re-write to improve robustness
-#
+#        rev-h May 7 2024          Moved more parameters to config file
+# v2.0   February 5 2025           Partial re-write to improve robustness
+#        rev-a February 12 2025    Fixed some bugs
 # ~ end comments ~
 
 
@@ -97,7 +96,8 @@ log_and_notify() {
 
 execute_backup() {
     local rsync_result  # Declare the variable as local to the function
-    sudo rsync -a --progress --backup-dir="${OLD_BACKUP_DIR}/${DATE}" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}"
+    # changed "${OLD_BACKUP_DIR}/${DATE}" into "${OLD_BACKUP_DIR}${DATE}" (removed /)
+    sudo rsync -a --progress --backup-dir="${OLD_BACKUP_DIR}${DATE}" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}"
     rsync_result=$?        # Assign the exit code
     if ! [[ $rsync_result -eq 0 ]]; then # Use numeric comparison for exit codes
         log_and_notify "rsync failed with exit code ${rsync_result}. Check the log file for details." true
@@ -156,6 +156,7 @@ config_load() {
 if ! config_load; then
     exit 1
 fi
+
 
 # Check if backup already run today. if so, exit
 check_run_file
