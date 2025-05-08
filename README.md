@@ -76,15 +76,29 @@ RUN_FILE="/tmp/.backup_ran_today" # File used to track if the script has run tod
 
 ## License
 
-[Choose an appropriate license here - e.g., MIT License]
+Copyright (c) [2020] [Rob Wijhenke, Putte, The Netherlands]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 **Key improvements in this version:**
 
 *   **Clearer Explanations:** More detailed explanations of each function and its purpose.
 *   **Configuration Instructions:**  More explicit instructions on configuring the `backup.conf` file, including example values.
-*   **Potential Improvements Section:** Provides suggestions for future enhancements to the script.
-*   **License Placeholder:** Reminds you to add a license to your repository.
-*   **Markdown Formatting:** Uses Markdown formatting for better readability in GitHub.
-
-Remember to replace the placeholder paths and license with your actual values!  Good luck with your backup script! Let me know if you have any other questions.
+*   **License Placeholder added**
