@@ -38,6 +38,12 @@ set -u
 
 # --- Functions ---
 
+# Check if script (or another sync) is alreay running. If so exit the backup
+if pgrep -x "rsync" > /dev/null; then
+    log_and_notify "rsync process already running. Skipping backup." false
+    exit 0
+fi
+
 # Check if the script has already run today. Uses a timestamp file.
 check_run_file() {
     # Check if the run file exists and was last modified today
@@ -94,29 +100,44 @@ log_and_notify() {
     fi
 }
 
+# Start backups
 execute_backup() {
-    local rsync_result  # Declare the variable as local to the function
-    # changed "${OLD_BACKUP_DIR}/${DATE}" into "${OLD_BACKUP_DIR}${DATE}" (removed /)
-    sudo rsync -a --progress --backup-dir="${OLD_BACKUP_DIR}${DATE}" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}"
-    rsync_result=$?        # Assign the exit code
-    if ! [[ $rsync_result -eq 0 ]]; then # Use numeric comparison for exit codes
-        log_and_notify "rsync failed with exit code ${rsync_result}. Check the log file for details." true
+    local rsync_result
+    local backup_dir="${OLD_BACKUP_DIR}${DATE}"
+
+    # Create the backup directory *before* running rsync.
+    if ! sudo mkdir -p "$backup_dir"; then
+        log_and_notify "Failed to create backup directory: $backup_dir" true
         return 1
     fi
+
+    # Run rsync and WAIT for it to finish.
+    sudo rsync -a --progress --backup-dir="$backup_dir" --delete -b -s --include-from "${SCRIPTS}/backupinclude.txt" --exclude-from "${SCRIPTS}/backupexclude.txt" "${SOURCE}" "${BACKUP}" 2>> "${BACKUP_LOG}"
+    rsync_result=$?
+
+    # Check the result of rsync.
+    if ! [[ $rsync_result -eq 0 ]]; then
+        log_and_notify "rsync failed with exit code ${rsync_result}. Check the log file for details." true
+        # Clean up the (likely empty) backup directory if rsync fails.
+        sudo rmdir "$backup_dir" 2>/dev/null  # Suppress error if directory isn't empty
+        return 1
+    fi
+
+    # Only now, after rsync has COMPLETELY finished, can you safely return.
 }
 
 # Remove backups beyond retention period
 delete_old_backups() {
     log_and_notify "Removing old backups" false
 
-    # Use -mindepth 1 to avoid issues with the base directory
-    find "$OLD_BACKUP_DIR" -mindepth 1 -type d -ctime +"$RETENTION_CYCLE" -exec sh -c 'sudo rm -rf "$1"; test $? -eq 0' sh {} \;
+    # Use mtime (modification time) instead of ctime for backup rotation.
+    find "$OLD_BACKUP_DIR" -mindepth 1 -type d -mtime +"$RETENTION_CYCLE" -exec sh -c 'sudo rm -rf "$1"; test $? -eq 0' sh {} \;
     find_result=$?
 
     if [[ $find_result -eq 0 ]]; then
         log_and_notify "Old backups removed" false
     else
-        log_and_notify "Failed to remove old backups (or some files could not be removed)" true  # More specific message
+        log_and_notify "Failed to remove old backups (or some files could not be removed)" true
     fi
 }
 
