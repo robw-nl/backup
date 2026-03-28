@@ -1,4 +1,4 @@
-This is my CachyOS linux home dir backup script that I started writing in March 2020 on Manjaro.
+This is my CachyOS (Arch) linux home dir backup script that I started writing in March 2020 on Manjaro.
 
 **Description of the Backup Script:**
 
